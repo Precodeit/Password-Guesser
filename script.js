@@ -4,6 +4,7 @@ function startGuessing() {
 	const passwordInput = document.getElementById("password");
 	const output = document.getElementById("output");
 	const timerText = document.getElementById("timer");
+	const gear = document.getElementById("gear");
 
 	if (!passwordInput || !output || !timerText) {
 		alert("Required elements not found in the HTML.");
@@ -17,50 +18,50 @@ function startGuessing() {
 		return;
 	}
 
-	output.innerText = "Starting guess...";
-	timerText.innerText = "Time: 0.00s";
+	output.innerText = "Starting...";
+	timerText.innerText = "⏱ Calculating...";
+	gear.style.display = "inline-block";
 
 	let startTime = performance.now();
 	let attempts = 0;
-	let guess = "";
 
-	const total = charset.length ** 5;
+	const charsetLength = charset.length;
 	let indices = [0, 0, 0, 0, 0];
+	let running = true;
 
-	function step() {
-		if (attempts >= total) {
-			output.innerText = "Password not found.";
-			return;
-		}
+	function getGuess(indices) {
+		return charset[indices[0]] + charset[indices[1]] + charset[indices[2]] + charset[indices[3]] + charset[indices[4]];
+	}
 
-		// Build guess from current indices
-		guess = charset[indices[0]] + charset[indices[1]] + charset[indices[2]] + charset[indices[3]] + charset[indices[4]];
-		attempts++;
+	async function guessLoop() {
+		while (running) {
+			// Guess in batches to avoid lag
+			for (let batch = 0; batch < 5000; batch++) {
+				let guess = getGuess(indices);
+				attempts++;
 
-		if (guess === target) {
-			let time = ((performance.now() - startTime) / 1000).toFixed(2);
-			output.innerText = `✅ Found: ${guess}`;
-			timerText.innerText = `⏱ Time: ${time} sec | Attempts: ${attempts}`;
-			return;
-		}
+				if (guess === target) {
+					const time = ((performance.now() - startTime) / 1000).toFixed(2);
+					output.innerText = `✅ Found: ${guess}`;
+					timerText.innerText = `🧠 Time: ${time}s | Attempts: ${attempts}`;
+					gear.style.display = "none";
+					running = false;
+					return;
+				}
 
-		// Update indices manually like a counter
-		indices[4]++;
-		for (let i = 4; i >= 0; i--) {
-			if (indices[i] >= charset.length) {
-				if (i === 0) return;
-				indices[i] = 0;
-				indices[i - 1]++;
+				// Update indices like base conversion
+				for (let i = 4; i >= 0; i--) {
+					if (indices[i] < charsetLength - 1) {
+						indices[i]++;
+						break;
+					} else {
+						indices[i] = 0;
+					}
+				}
 			}
-		}
-
-		// Schedule next chunk after tiny delay
-		if (attempts % 1000 === 0) {
-			setTimeout(step, 1); // 1ms pause every 1000 guesses
-		} else {
-			step();
+			await new Promise(resolve => setTimeout(resolve, 1)); // Yield control
 		}
 	}
 
-	setTimeout(step, 50); // Start the first step
+	guessLoop();
 }
