@@ -38,5 +38,5 @@ function startGuessing() {
 
 	setTimeout(() => {
 		tryNext();
-	}, 100); // Delay so browser doesn't freeze
+	}, 100);
 }
