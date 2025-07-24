@@ -12,31 +12,49 @@ function startGuessing() {
 	}
 
 	let startTime = Date.now();
-	let guess = ["", "", "", "", ""]; // Starting guess
-	let found = false;
 	let attempts = 0;
+	let guess = "";
+	let interval;
 
-	function tryNext(index = 0) {
-		if (index >= 5) {
-			attempts++;
-			const currentGuess = guess.join("");
-			output.innerText = `Trying: ${currentGuess}`;
-			if (currentGuess === target) {
-				const seconds = ((Date.now() - startTime) / 1000).toFixed(2);
-				timerText.innerText = `Found in ${seconds} seconds with ${attempts} attempts!`;
-				return;
-			}
-			return tryNext(4);
+	// Generate all possible 5-character combinations
+	let allCombos = [];
+
+	function generateCombos(prefix = "") {
+		if (prefix.length === 5) {
+			allCombos.push(prefix);
+			return;
 		}
-
 		for (let i = 0; i < charset.length; i++) {
-			guess[index] = charset[i];
-			tryNext(index + 1);
-			if (guess.join("") === target) return;
+			generateCombos(prefix + charset[i]);
 		}
 	}
 
+	output.innerText = "Generating guesses (this might take a few seconds)...";
 	setTimeout(() => {
-		tryNext();
-	}, 100);
+		allCombos = [];
+		generateCombos();
+
+		output.innerText = "Starting to guess...";
+		let index = 0;
+
+		interval = setInterval(() => {
+			if (index >= allCombos.length) {
+				clearInterval(interval);
+				output.innerText = "Failed to guess.";
+				return;
+			}
+
+			guess = allCombos[index];
+			attempts++;
+			output.innerText = `Trying: ${guess}`;
+
+			if (guess === target) {
+				clearInterval(interval);
+				const seconds = ((Date.now() - startTime) / 1000).toFixed(2);
+				timerText.innerText = `Found in ${seconds} seconds with ${attempts} attempts!`;
+			}
+
+			index++;
+		}, 5); // Speed: 5ms per guess
+	}, 200); // Small delay so page doesn't freeze
 }
