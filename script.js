@@ -1,35 +1,40 @@
 const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/`~";
 
 function startGuessing() {
-	const target = document.getElementById("password").value;
+	const passwordInput = document.getElementById("password");
+	const output = document.getElementById("output");
+	const timerText = document.getElementById("timer");
+
+	if (!passwordInput || !output || !timerText) {
+		alert("Required elements not found in the HTML.");
+		return;
+	}
+
+	const target = passwordInput.value;
 
 	if (target.length !== 5) {
 		alert("Please enter exactly 5 characters.");
 		return;
 	}
 
-	const startTime = Date.now();
-	const output = document.getElementById("output");
-	const timerText = document.getElementById("timer");
-
+	const startTime = performance.now();
 	let attempts = 0;
-	let found = false;
+	let guess = "";
 
-	// Use nested loops instead of recursion
-	for (let a = 0; a < charset.length; a++) {
-		for (let b = 0; b < charset.length; b++) {
-			for (let c = 0; c < charset.length; c++) {
-				for (let d = 0; d < charset.length; d++) {
-					for (let e = 0; e < charset.length; e++) {
-						const guess = charset[a] + charset[b] + charset[c] + charset[d] + charset[e];
+	const charsetLength = charset.length;
+
+	// Brute-force using nested loops
+	outerLoop:
+	for (let i1 = 0; i1 < charsetLength; i1++) {
+		for (let i2 = 0; i2 < charsetLength; i2++) {
+			for (let i3 = 0; i3 < charsetLength; i3++) {
+				for (let i4 = 0; i4 < charsetLength; i4++) {
+					for (let i5 = 0; i5 < charsetLength; i5++) {
+						guess = charset[i1] + charset[i2] + charset[i3] + charset[i4] + charset[i5];
 						attempts++;
 
 						if (guess === target) {
-							found = true;
-							const time = ((Date.now() - startTime) / 1000).toFixed(2);
-							output.innerText = `Password found: ${guess}`;
-							timerText.innerText = `Time: ${time} sec | Attempts: ${attempts}`;
-							return;
+							break outerLoop;
 						}
 					}
 				}
@@ -37,7 +42,9 @@ function startGuessing() {
 		}
 	}
 
-	if (!found) {
-		output.innerText = "Password not found.";
-	}
+	const endTime = performance.now();
+	const totalTime = ((endTime - startTime) / 1000).toFixed(2);
+
+	output.innerText = `✅ Password found: ${guess}`;
+	timerText.innerText = `Time: ${totalTime} seconds | Attempts: ${attempts}`;
 }
