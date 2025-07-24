@@ -17,34 +17,50 @@ function startGuessing() {
 		return;
 	}
 
-	const startTime = performance.now();
+	output.innerText = "Starting guess...";
+	timerText.innerText = "Time: 0.00s";
+
+	let startTime = performance.now();
 	let attempts = 0;
 	let guess = "";
 
-	const charsetLength = charset.length;
+	const total = charset.length ** 5;
+	let indices = [0, 0, 0, 0, 0];
 
-	// Brute-force using nested loops
-	outerLoop:
-	for (let i1 = 0; i1 < charsetLength; i1++) {
-		for (let i2 = 0; i2 < charsetLength; i2++) {
-			for (let i3 = 0; i3 < charsetLength; i3++) {
-				for (let i4 = 0; i4 < charsetLength; i4++) {
-					for (let i5 = 0; i5 < charsetLength; i5++) {
-						guess = charset[i1] + charset[i2] + charset[i3] + charset[i4] + charset[i5];
-						attempts++;
+	function step() {
+		if (attempts >= total) {
+			output.innerText = "Password not found.";
+			return;
+		}
 
-						if (guess === target) {
-							break outerLoop;
-						}
-					}
-				}
+		// Build guess from current indices
+		guess = charset[indices[0]] + charset[indices[1]] + charset[indices[2]] + charset[indices[3]] + charset[indices[4]];
+		attempts++;
+
+		if (guess === target) {
+			let time = ((performance.now() - startTime) / 1000).toFixed(2);
+			output.innerText = `✅ Found: ${guess}`;
+			timerText.innerText = `⏱ Time: ${time} sec | Attempts: ${attempts}`;
+			return;
+		}
+
+		// Update indices manually like a counter
+		indices[4]++;
+		for (let i = 4; i >= 0; i--) {
+			if (indices[i] >= charset.length) {
+				if (i === 0) return;
+				indices[i] = 0;
+				indices[i - 1]++;
 			}
+		}
+
+		// Schedule next chunk after tiny delay
+		if (attempts % 1000 === 0) {
+			setTimeout(step, 1); // 1ms pause every 1000 guesses
+		} else {
+			step();
 		}
 	}
 
-	const endTime = performance.now();
-	const totalTime = ((endTime - startTime) / 1000).toFixed(2);
-
-	output.innerText = `✅ Password found: ${guess}`;
-	timerText.innerText = `Time: ${totalTime} seconds | Attempts: ${attempts}`;
+	setTimeout(step, 50); // Start the first step
 }
